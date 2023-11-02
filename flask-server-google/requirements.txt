@@ -4,5 +4,5 @@ flask
 mongoengine
 pyjwt
 pymongo[srv]
-dotenv
+python-dotenv
 flask_cors

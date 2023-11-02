@@ -5,7 +5,7 @@ import { Routes, Route } from "react-router-dom";
 import Axios from "axios";
 import { useNavigate } from "react-router";
 
-export const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+export const BACKEND_URL = "http://127.0.0.1:5000";
 
 function App() {
   const nav=useNavigate()

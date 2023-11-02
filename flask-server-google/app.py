@@ -10,13 +10,15 @@ from google.oauth2 import id_token
 from google_auth_oauthlib.flow import Flow
 import os, pathlib
 import google
-from connect_db import connect_db, insert_into_db
 import jwt
+from uuid import uuid4
 from flask_cors import CORS
+from flask_migrate import Migrate
+from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
 load_dotenv()
-CORS(app)
+CORS(app, supports_credentials=True)
 app.config['Access-Control-Allow-Origin'] = '*'
 app.config["Access-Control-Allow-Headers"]="Content-Type"
 
@@ -28,6 +30,44 @@ client_secrets_file = os.path.join(pathlib.Path(__file__).parent, "client-secret
 algorithm = os.getenv("ALGORITHM")
 BACKEND_URL=os.getenv("BACKEND_URL")
 FRONTEND_URL=os.getenv("FRONTEND_URL")
+
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'  # Use SQLite
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
+migrate = Migrate(app, db)
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    uuid = db.Column(db.String(32), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    picture = db.Column(db.String(120), nullable=True)
+
+def connect_db():
+    try:
+        with app.app_context():
+            db.create_all()  # Create the database tables if they don't exist
+        print("SQLite database connected")
+    except Exception as e:
+        print(e)
+
+def insert_into_db(username, email, picture):
+    try:
+        user = User.query.filter_by(username=username).first()
+        if user:
+            print({"_id": user.id, "message": "User already exists"})
+        else:
+            new_user = User(
+                username=username,
+                uuid=uuid4().hex,
+                email=email,
+                picture=picture
+            )
+            db.session.add(new_user)
+            db.session.commit()
+            print({"_id": new_user.id, "message": "User created"})
+    except Exception as e:
+        print({"error": str(e)})
 
 #database connection
 connect_db()
